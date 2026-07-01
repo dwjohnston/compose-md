@@ -3,6 +3,7 @@ import { join } from 'path';
 import { runInteractive } from './interactive.js';
 import { viewApproach } from './commands/view.js';
 import { applyApproach } from './commands/apply.js';
+import { runInit } from './commands/init.js';
 
 const cwd = process.cwd();
 const docsRoot = join(cwd, 'projectDocs');
@@ -22,6 +23,9 @@ switch (command) {
     viewApproach(docsRoot, name);
     break;
   }
+  case 'init':
+    await runInit(cwd);
+    break;
   default:
     await runInteractive(docsRoot, cwd);
 }
