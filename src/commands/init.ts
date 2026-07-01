@@ -13,6 +13,9 @@ const KNOWN_AGENT_FILES = [
   'SKILL.md',                           // Claude Code skills
   'GEMINI.md',                          // Google Gemini
   '.github/copilot-instructions.md',    // GitHub Copilot
+  'src/AGENTS.md',
+  'src/CLAUDE.md',
+  'src/SKILL.md',
 ];
 
 function toKebab(name: string): string {
