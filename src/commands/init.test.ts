@@ -117,6 +117,41 @@ describe('scaffoldProject', () => {
     expect(existsSync(join(cwd, 'projectDocs/existing/projectdocs-claude.md'))).toBe(false);
   });
 
+  test('copies starting prompts shipped with the package into starting/ as fragments', () => {
+    const created = scaffoldProject(cwd, 'projectDocs');
+
+    expect(created).toContain('projectDocs/starting/docs-workflow.md');
+
+    const fragment = readFileSync(join(cwd, 'projectDocs/starting/docs-workflow.md'), 'utf-8');
+    expect(fragment).toContain('name: docs-workflow');
+    expect(fragment).toContain('description: Docs Workflow');
+    expect(fragment).toContain('Do Not Edit Directly');
+
+    const approachYaml = readFileSync(join(cwd, 'projectDocs/_approaches/default.yaml'), 'utf-8');
+    expect(approachYaml).toContain('"@docs-workflow"');
+  });
+
+  test('wires starting prompts into every generated output, including agent-derived ones', () => {
+    write('CLAUDE.md', '# Root instructions');
+
+    scaffoldProject(cwd, 'projectDocs');
+
+    const approachYaml = readFileSync(join(cwd, 'projectDocs/_approaches/default.yaml'), 'utf-8');
+    const claudeSection = approachYaml.split('CLAUDE.md:')[1];
+    expect(claudeSection).toContain('"@docs-workflow"');
+    expect(claudeSection).toContain('"@claude"');
+  });
+
+  test('does not duplicate or overwrite hand-edited starting prompts on re-run', () => {
+    scaffoldProject(cwd, 'projectDocs');
+    writeFileSync(join(cwd, 'projectDocs/starting/docs-workflow.md'), 'hand-edited, do not clobber');
+
+    scaffoldProject(cwd, 'projectDocs');
+
+    const fragment = readFileSync(join(cwd, 'projectDocs/starting/docs-workflow.md'), 'utf-8');
+    expect(fragment).toBe('hand-edited, do not clobber');
+  });
+
   test('is idempotent: re-running does not duplicate or overwrite existing fragments', () => {
     write('CLAUDE.md', 'original content');
     scaffoldProject(cwd, 'projectDocs');

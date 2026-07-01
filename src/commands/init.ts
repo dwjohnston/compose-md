@@ -1,6 +1,7 @@
 import { input, confirm } from '@inquirer/prompts';
 import { existsSync, mkdirSync, writeFileSync, readFileSync, appendFileSync, readdirSync } from 'fs';
-import { join, relative, basename, sep } from 'path';
+import { join, relative, basename, dirname, sep } from 'path';
+import { fileURLToPath } from 'url';
 
 interface AgentFile {
   sourcePath: string;   // relative to cwd, e.g. "CLAUDE.md"
@@ -28,6 +29,54 @@ function toKebab(name: string): string {
 
 function pathToId(p: string): string {
   return toKebab(p.replace(/\.[^.]+$/, ''));   // e.g. src/commands/CLAUDE.md → src-commands-claude
+}
+
+function idToTitle(id: string): string {
+  return id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+// Plain .md files shipped with the package (src/startingPrompts/*.md) that
+// get copied into every new project as ready-made fragments.
+function startingPromptsSourceDir(): string {
+  const here = dirname(fileURLToPath(import.meta.url));
+  return join(here, '..', 'startingPrompts');
+}
+
+interface StartingPrompt {
+  id: string;
+  destRelPath: string;   // relative to docsRoot, e.g. "starting/docs-workflow.md"
+}
+
+function copyStartingPrompts(docsRoot: string, docsRootName: string, created: string[]): StartingPrompt[] {
+  const sourceDir = startingPromptsSourceDir();
+  if (!existsSync(sourceDir)) return [];
+
+  const files = readdirSync(sourceDir).filter(f => f.endsWith('.md'));
+  if (files.length === 0) return [];
+
+  const destDir = join(docsRoot, 'starting');
+  mkdirSync(destDir, { recursive: true });
+
+  const prompts: StartingPrompt[] = [];
+  for (const file of files) {
+    const id = toKebab(file.replace(/\.md$/, ''));
+    const destFile = join(destDir, `${id}.md`);
+    if (!existsSync(destFile)) {
+      const content = readFileSync(join(sourceDir, file), 'utf-8');
+      writeFileSync(destFile, [
+        '---',
+        `name: ${id}`,
+        `description: ${idToTitle(id)}`,
+        '---',
+        '',
+        content.trim(),
+        '',
+      ].join('\n'));
+      created.push(`${docsRootName}/starting/${id}.md`);
+    }
+    prompts.push({ id, destRelPath: `starting/${id}.md` });
+  }
+  return prompts;
 }
 
 function isAgentFile(relPath: string): boolean {
@@ -59,18 +108,22 @@ function findAgentFiles(cwd: string, excludeDirs: string[] = []): AgentFile[] {
   return results.sort((a, b) => a.sourcePath.localeCompare(b.sourcePath));
 }
 
-function buildDefaultYaml(agentFiles: AgentFile[]): string {
+function buildDefaultYaml(agentFiles: AgentFile[], startingPrompts: StartingPrompt[]): string {
+  const startingIncludes = startingPrompts.map(({ id }) => `    - "@${id}"`);
+
   const lines: string[] = [
     'name: default',
     'description: Initial approach',
     '',
     'outputs:',
     '  AGENTS.md:',
+    ...startingIncludes,
     '    - "@getting-started"',
   ];
 
   for (const { sourcePath, fragmentId } of agentFiles) {
     lines.push(`  ${sourcePath}:`);
+    lines.push(...startingIncludes);
     lines.push(`    - "@${fragmentId}"`);
   }
 
@@ -117,6 +170,9 @@ export function scaffoldProject(cwd: string, docsRootName: string): string[] {
     created.push(`${docsRootName}/getting-started.md`);
   }
 
+  // Curated starter fragments shipped with compose-md
+  const startingPrompts = copyStartingPrompts(docsRoot, docsRootName, created);
+
   // Scan for agent prompt files (excluding the docs root we just created)
   const agentFiles = findAgentFiles(cwd, [docsRootName]);
   if (agentFiles.length > 0) {
@@ -142,7 +198,7 @@ export function scaffoldProject(cwd: string, docsRootName: string): string[] {
   // Default approach YAML
   const defaultApproach = join(docsRoot, '_approaches', 'default.yaml');
   if (!existsSync(defaultApproach)) {
-    writeFileSync(defaultApproach, buildDefaultYaml(agentFiles));
+    writeFileSync(defaultApproach, buildDefaultYaml(agentFiles, startingPrompts));
     created.push(`${docsRootName}/_approaches/default.yaml`);
   }
 
