@@ -92,10 +92,10 @@ describe('scaffoldProject', () => {
 
     const created = scaffoldProject(cwd, 'projectDocs');
 
-    expect(created).toContain('projectDocs/claude.md');
-    expect(created).toContain('projectDocs/claude-agents-reviewer.md');
+    expect(created).toContain('projectDocs/existing/claude.md');
+    expect(created).toContain('projectDocs/existing/claude-agents-reviewer.md');
 
-    const claudeFragment = readFileSync(join(cwd, 'projectDocs/claude.md'), 'utf-8');
+    const claudeFragment = readFileSync(join(cwd, 'projectDocs/existing/claude.md'), 'utf-8');
     expect(claudeFragment).toContain('name: claude');
     expect(claudeFragment).toContain('description: content of CLAUDE.md');
     expect(claudeFragment).toContain('# Root instructions');
@@ -114,7 +114,7 @@ describe('scaffoldProject', () => {
     const created = scaffoldProject(cwd, 'projectDocs');
 
     expect(created.some(p => p.includes('some-pkg'))).toBe(false);
-    expect(existsSync(join(cwd, 'projectDocs/projectdocs-claude.md'))).toBe(false);
+    expect(existsSync(join(cwd, 'projectDocs/existing/projectdocs-claude.md'))).toBe(false);
   });
 
   test('is idempotent: re-running does not duplicate or overwrite existing fragments', () => {
@@ -122,11 +122,11 @@ describe('scaffoldProject', () => {
     scaffoldProject(cwd, 'projectDocs');
 
     // Mutate the source file and the already-created fragment differently, then re-run.
-    writeFileSync(join(cwd, 'projectDocs/claude.md'), 'hand-edited fragment, do not clobber');
+    writeFileSync(join(cwd, 'projectDocs/existing/claude.md'), 'hand-edited fragment, do not clobber');
 
     scaffoldProject(cwd, 'projectDocs');
 
-    const fragment = readFileSync(join(cwd, 'projectDocs/claude.md'), 'utf-8');
+    const fragment = readFileSync(join(cwd, 'projectDocs/existing/claude.md'), 'utf-8');
     expect(fragment).toBe('hand-edited fragment, do not clobber');
   });
 });

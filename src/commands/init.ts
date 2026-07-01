@@ -119,9 +119,12 @@ export function scaffoldProject(cwd: string, docsRootName: string): string[] {
 
   // Scan for agent prompt files (excluding the docs root we just created)
   const agentFiles = findAgentFiles(cwd, [docsRootName]);
+  if (agentFiles.length > 0) {
+    mkdirSync(join(docsRoot, 'existing'), { recursive: true });
+  }
   for (const { sourcePath, fragmentId } of agentFiles) {
     const content = readFileSync(join(cwd, sourcePath), 'utf-8');
-    const fragmentFile = join(docsRoot, `${fragmentId}.md`);
+    const fragmentFile = join(docsRoot, 'existing', `${fragmentId}.md`);
     if (!existsSync(fragmentFile)) {
       writeFileSync(fragmentFile, [
         '---',
@@ -132,7 +135,7 @@ export function scaffoldProject(cwd: string, docsRootName: string): string[] {
         content.trim(),
         '',
       ].join('\n'));
-      created.push(`${docsRootName}/${fragmentId}.md`);
+      created.push(`${docsRootName}/existing/${fragmentId}.md`);
     }
   }
 
