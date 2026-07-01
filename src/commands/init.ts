@@ -1,5 +1,5 @@
 import { input, confirm } from '@inquirer/prompts';
-import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, appendFileSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, appendFileSync } from 'fs';
 import { join, basename, extname } from 'path';
 
 interface AgentFile {
@@ -7,33 +7,25 @@ interface AgentFile {
   fragmentId: string;   // e.g. "claude"
 }
 
+const KNOWN_AGENT_FILES = [
+  'AGENTS.md',                          // OpenAI Codex, generic
+  'CLAUDE.md',                          // Anthropic Claude
+  'SKILL.md',                           // Claude Code skills
+  'GEMINI.md',                          // Google Gemini
+  '.github/copilot-instructions.md',    // GitHub Copilot
+];
+
 function toKebab(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/, '');
 }
 
 function findAgentFiles(cwd: string): AgentFile[] {
-  const found: AgentFile[] = [];
-
-  for (const filename of ['AGENTS.md', 'CLAUDE.md', 'SKILL.md']) {
-    if (existsSync(join(cwd, filename))) {
-      found.push({
-        sourcePath: filename,
-        fragmentId: toKebab(basename(filename, extname(filename))),
-      });
-    }
-  }
-
-  const agentsDir = join(cwd, '.claude', 'agents');
-  if (existsSync(agentsDir)) {
-    for (const f of readdirSync(agentsDir).filter(f => f.endsWith('.md'))) {
-      found.push({
-        sourcePath: join('.claude', 'agents', f),
-        fragmentId: toKebab(basename(f, extname(f))),
-      });
-    }
-  }
-
-  return found;
+  return KNOWN_AGENT_FILES
+    .filter(p => existsSync(join(cwd, p)))
+    .map(p => ({
+      sourcePath: p,
+      fragmentId: toKebab(basename(p, extname(p))),
+    }));
 }
 
 function buildDefaultYaml(docsRootName: string, agentFiles: AgentFile[]): string {
@@ -54,12 +46,13 @@ function buildDefaultYaml(docsRootName: string, agentFiles: AgentFile[]): string
   return lines.join('\n') + '\n';
 }
 
-function ensureGitignore(cwd: string, docsRootName: string, agentFiles: AgentFile[]): void {
+function ensureGitignore(cwd: string, docsRootName: string): void {
   const gitignorePath = join(cwd, '.gitignore');
   const entries = [
+    '#ignore all agent files because we are using compose-md',
     '.compose-active',
     `${docsRootName}/_index.md`,
-    ...agentFiles.map(f => f.sourcePath),
+    ...KNOWN_AGENT_FILES,
   ];
 
   const existing = existsSync(gitignorePath) ? readFileSync(gitignorePath, 'utf-8') : '';
@@ -143,7 +136,7 @@ export async function runInit(cwd: string): Promise<void> {
   }
 
   // Gitignore
-  ensureGitignore(cwd, docsRootName, agentFiles);
+  ensureGitignore(cwd, docsRootName);
 
   console.log('\nCreated:');
   for (const path of created) {
