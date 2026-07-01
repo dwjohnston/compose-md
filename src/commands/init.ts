@@ -1,37 +1,65 @@
 import { input, confirm } from '@inquirer/prompts';
-import { existsSync, mkdirSync, writeFileSync, readFileSync, appendFileSync } from 'fs';
-import { join, basename, extname } from 'path';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, appendFileSync, readdirSync } from 'fs';
+import { join, relative, basename, sep } from 'path';
 
 interface AgentFile {
   sourcePath: string;   // relative to cwd, e.g. "CLAUDE.md"
   fragmentId: string;   // e.g. "claude"
 }
 
-const KNOWN_AGENT_FILES = [
-  'AGENTS.md',                          // OpenAI Codex, generic
-  'CLAUDE.md',                          // Anthropic Claude
-  'SKILL.md',                           // Claude Code skills
-  'GEMINI.md',                          // Google Gemini
-  '.github/copilot-instructions.md',    // GitHub Copilot
-  'src/AGENTS.md',
-  'src/CLAUDE.md',
-  'src/SKILL.md',
-];
+// Filenames recognized anywhere in the project tree.
+const AGENT_FILENAMES = new Set([
+  'AGENTS.md',   // OpenAI Codex, generic
+  'CLAUDE.md',   // Anthropic Claude
+  'SKILL.md',    // Claude Code skills
+  'GEMINI.md',   // Google Gemini
+]);
+
+// Exact relative paths recognized at that specific location only.
+const AGENT_PATHS = new Set([
+  '.github/copilot-instructions.md',
+]);
+
+const EXCLUDED_DIRS = new Set(['node_modules', '.git']);
 
 function toKebab(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/, '');
 }
 
-function findAgentFiles(cwd: string): AgentFile[] {
-  return KNOWN_AGENT_FILES
-    .filter(p => existsSync(join(cwd, p)))
-    .map(p => ({
-      sourcePath: p,
-      fragmentId: toKebab(basename(p, extname(p))),
-    }));
+function pathToId(p: string): string {
+  return toKebab(p.replace(/\.[^.]+$/, ''));   // e.g. src/commands/CLAUDE.md → src-commands-claude
 }
 
-function buildDefaultYaml(docsRootName: string, agentFiles: AgentFile[]): string {
+function isAgentFile(relPath: string): boolean {
+  if (AGENT_FILENAMES.has(basename(relPath))) return true;
+  const posixPath = relPath.split(sep).join('/');
+  if (AGENT_PATHS.has(posixPath)) return true;
+  if (/^\.claude\/agents\/[^/]+\.md$/.test(posixPath)) return true;
+  return false;
+}
+
+function findAgentFiles(cwd: string, excludeDirs: string[] = []): AgentFile[] {
+  const excluded = new Set(excludeDirs);
+  const results: AgentFile[] = [];
+
+  function walk(dir: string) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      const rel = relative(cwd, full);
+      if (entry.isDirectory()) {
+        if (EXCLUDED_DIRS.has(entry.name) || excluded.has(rel)) continue;
+        walk(full);
+      } else if (entry.isFile() && isAgentFile(rel)) {
+        results.push({ sourcePath: rel.split(sep).join('/'), fragmentId: pathToId(rel) });
+      }
+    }
+  }
+
+  walk(cwd);
+  return results.sort((a, b) => a.sourcePath.localeCompare(b.sourcePath));
+}
+
+function buildDefaultYaml(agentFiles: AgentFile[]): string {
   const lines: string[] = [
     'name: default',
     'description: Initial approach',
@@ -52,10 +80,8 @@ function buildDefaultYaml(docsRootName: string, agentFiles: AgentFile[]): string
 function ensureGitignore(cwd: string, docsRootName: string): void {
   const gitignorePath = join(cwd, '.gitignore');
   const entries = [
-    '#ignore all agent files because we are using compose-md',
     '.compose-active',
     `${docsRootName}/_index.md`,
-    ...KNOWN_AGENT_FILES,
   ];
 
   const existing = existsSync(gitignorePath) ? readFileSync(gitignorePath, 'utf-8') : '';
@@ -66,22 +92,8 @@ function ensureGitignore(cwd: string, docsRootName: string): void {
   appendFileSync(gitignorePath, prefix + toAdd.join('\n') + '\n');
 }
 
-export async function runInit(cwd: string): Promise<void> {
-  const docsRootName = await input({
-    message: 'Docs root name:',
-    default: 'projectDocs',
-  });
-
+export function scaffoldProject(cwd: string, docsRootName: string): string[] {
   const docsRoot = join(cwd, docsRootName);
-
-  if (existsSync(docsRoot)) {
-    const proceed = await confirm({
-      message: `${docsRootName}/ already exists. Continue?`,
-      default: false,
-    });
-    if (!proceed) return;
-  }
-
   const created: string[] = [];
 
   // Directories
@@ -105,8 +117,8 @@ export async function runInit(cwd: string): Promise<void> {
     created.push(`${docsRootName}/getting-started.md`);
   }
 
-  // Scan for agent prompt files
-  const agentFiles = findAgentFiles(cwd);
+  // Scan for agent prompt files (excluding the docs root we just created)
+  const agentFiles = findAgentFiles(cwd, [docsRootName]);
   for (const { sourcePath, fragmentId } of agentFiles) {
     const content = readFileSync(join(cwd, sourcePath), 'utf-8');
     const fragmentFile = join(docsRoot, `${fragmentId}.md`);
@@ -127,7 +139,7 @@ export async function runInit(cwd: string): Promise<void> {
   // Default approach YAML
   const defaultApproach = join(docsRoot, '_approaches', 'default.yaml');
   if (!existsSync(defaultApproach)) {
-    writeFileSync(defaultApproach, buildDefaultYaml(docsRootName, agentFiles));
+    writeFileSync(defaultApproach, buildDefaultYaml(agentFiles));
     created.push(`${docsRootName}/_approaches/default.yaml`);
   }
 
@@ -141,6 +153,28 @@ export async function runInit(cwd: string): Promise<void> {
   // Gitignore
   ensureGitignore(cwd, docsRootName);
 
+  return created;
+}
+
+export async function runInit(cwd: string): Promise<void> {
+  const docsRootName = await input({
+    message: 'Docs root name:',
+    default: 'projectDocs',
+  });
+
+  const docsRoot = join(cwd, docsRootName);
+
+  if (existsSync(docsRoot)) {
+    const proceed = await confirm({
+      message: `${docsRootName}/ already exists. Continue?`,
+      default: false,
+    });
+    if (!proceed) return;
+  }
+
+  const created = scaffoldProject(cwd, docsRootName);
+  const agentFiles = findAgentFiles(cwd, [docsRootName]);
+
   console.log('\nCreated:');
   for (const path of created) {
     console.log(`  ${path}`);
@@ -153,3 +187,5 @@ export async function runInit(cwd: string): Promise<void> {
   }
   console.log('\nDone. Run `compose` to select and apply an approach.');
 }
+
+export { findAgentFiles };

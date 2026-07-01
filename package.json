@@ -7,7 +7,8 @@
     "compose": "./src/cli.ts"
   },
   "scripts": {
-    "compose": "bun run src/cli.ts"
+    "compose": "bun run src/cli.ts",
+    "test": "bun test"
   },
   "devDependencies": {
     "@types/bun": "latest",
