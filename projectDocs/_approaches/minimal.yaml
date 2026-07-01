@@ -1,0 +1,5 @@
+name: minimal
+description: Just the overview
+outputs:
+  README.md:
+    - "@overview"

@@ -1,0 +1,7 @@
+name: default
+description: Full README with overview, getting started, and tooling
+outputs:
+  README.md:
+    - "@overview"
+    - "@getting-started"
+    - "@tooling"

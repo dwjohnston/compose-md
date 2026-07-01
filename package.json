@@ -3,10 +3,21 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "bin": {
+    "compose": "./src/cli.ts"
+  },
+  "scripts": {
+    "compose": "bun run src/cli.ts"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/js-yaml": "^4.0.9"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.5.2",
+    "js-yaml": "^5.2.0"
   }
 }
