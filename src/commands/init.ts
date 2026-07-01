@@ -42,7 +42,7 @@ function buildDefaultYaml(docsRootName: string, agentFiles: AgentFile[]): string
     'description: Initial approach',
     '',
     'outputs:',
-    '  README.md:',
+    '  AGENTS.md:',
     '    - "@getting-started"',
   ];
 
