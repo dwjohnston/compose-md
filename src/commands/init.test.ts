@@ -149,7 +149,7 @@ describe('scaffoldProject', () => {
     expect(approachYaml).toContain('"@docs-workflow"');
   });
 
-  test('wires starting prompts into every generated output, including agent-derived ones', () => {
+  test('wires starting prompts into the root file only, when an existing agent file is the root', () => {
     write('CLAUDE.md', '# Root instructions');
 
     scaffoldProject(cwd, 'projectDocs');
@@ -158,6 +158,35 @@ describe('scaffoldProject', () => {
     const claudeSection = approachYaml.split('CLAUDE.md:')[1];
     expect(claudeSection).toContain('"@docs-workflow"');
     expect(claudeSection).toContain('"@claude"');
+    expect(approachYaml).not.toContain('AGENTS.md:');
+  });
+
+  test('does not wire starting prompts into nested agent files', () => {
+    write('CLAUDE.md', '# Root instructions');
+    write('src/CLAUDE.md', '# Nested instructions');
+
+    scaffoldProject(cwd, 'projectDocs');
+
+    const approachYaml = readFileSync(join(cwd, 'projectDocs/_approaches/default.yaml'), 'utf-8');
+    const nestedSection = approachYaml.split('src/CLAUDE.md:')[1];
+    expect(nestedSection).not.toContain('"@docs-workflow"');
+    expect(nestedSection).not.toContain('"@getting-started"');
+    expect(nestedSection).toContain('"@src-claude"');
+  });
+
+  test('creates AGENTS.md as the root file when no root-level agent file exists', () => {
+    write('src/CLAUDE.md', '# Nested instructions');
+
+    scaffoldProject(cwd, 'projectDocs');
+
+    const approachYaml = readFileSync(join(cwd, 'projectDocs/_approaches/default.yaml'), 'utf-8');
+    const rootSection = approachYaml.split('AGENTS.md:')[1].split('src/CLAUDE.md:')[0];
+    expect(rootSection).toContain('"@docs-workflow"');
+    expect(rootSection).toContain('"@getting-started"');
+
+    const nestedSection = approachYaml.split('src/CLAUDE.md:')[1];
+    expect(nestedSection).not.toContain('"@docs-workflow"');
+    expect(nestedSection).toContain('"@src-claude"');
   });
 
   test('does not duplicate or overwrite hand-edited starting prompts on re-run', () => {

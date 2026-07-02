@@ -111,19 +111,31 @@ function findAgentFiles(cwd: string, excludeDirs: string[] = []): AgentFile[] {
 function buildDefaultYaml(agentFiles: AgentFile[], startingPrompts: StartingPrompt[]): string {
   const startingIncludes = startingPrompts.map(({ id }) => `    - "@${id}"`);
 
+  // The "root file" is an agent file that lives at the project root (no
+  // directory component). Starting prompts (e.g. docs-workflow) only belong
+  // there, not in every nested agent file. Prefer an existing AGENTS.md;
+  // otherwise fall back to whichever root-level file was found first.
+  const rootFiles = agentFiles.filter(f => !f.sourcePath.includes('/'));
+  const otherFiles = agentFiles.filter(f => f.sourcePath.includes('/'));
+  const rootFile = rootFiles.find(f => f.sourcePath === 'AGENTS.md') ?? rootFiles[0];
+  const rootSourcePath = rootFile?.sourcePath ?? 'AGENTS.md';
+  const remainingRootFiles = rootFiles.filter(f => f !== rootFile);
+
   const lines: string[] = [
     'name: default',
     'description: Initial approach',
     '',
     'outputs:',
-    '  AGENTS.md:',
+    `  ${rootSourcePath}:`,
     ...startingIncludes,
     '    - "@getting-started"',
   ];
+  if (rootFile) {
+    lines.push(`    - "@${rootFile.fragmentId}"`);
+  }
 
-  for (const { sourcePath, fragmentId } of agentFiles) {
+  for (const { sourcePath, fragmentId } of [...remainingRootFiles, ...otherFiles]) {
     lines.push(`  ${sourcePath}:`);
-    lines.push(...startingIncludes);
     lines.push(`    - "@${fragmentId}"`);
   }
 

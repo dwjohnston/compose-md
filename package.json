@@ -8,7 +8,8 @@
   },
   "scripts": {
     "compose": "bun run src/cli.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "clean": "rm -rf projectDocs && git checkout -- .gitignore"
   },
   "devDependencies": {
     "@types/bun": "latest",
