@@ -3,6 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { findAgentFiles, scaffoldProject } from './init.ts';
+import { applyApproach } from './apply.ts';
 
 let cwd: string;
 
@@ -143,10 +144,42 @@ describe('scaffoldProject', () => {
     const fragment = readFileSync(join(cwd, 'projectDocs/starting/docs-workflow.md'), 'utf-8');
     expect(fragment).toContain('name: docs-workflow');
     expect(fragment).toContain('description: Docs Workflow');
-    expect(fragment).toContain('Do Not Edit Directly');
+    expect(fragment).toContain('Do not edit them directly');
+    // $PROJECT_DOCS placeholder is substituted with the chosen docs root name.
+    expect(fragment).toContain('edit the files in projectDocs');
+    expect(fragment).not.toContain('$PROJECT_DOCS');
 
     const approachYaml = readFileSync(join(cwd, 'projectDocs/_approaches/default.yaml'), 'utf-8');
     expect(approachYaml).toContain('"@docs-workflow"');
+  });
+
+  test('copies starting skills into starting/ and wires them to their own output path', () => {
+    const created = scaffoldProject(cwd, 'projectDocs');
+
+    expect(created).toContain('projectDocs/starting/compose-docs-skill.md');
+
+    const fragment = readFileSync(join(cwd, 'projectDocs/starting/compose-docs-skill.md'), 'utf-8');
+    // The compose-md bookkeeping frontmatter (stripped when composing)...
+    expect(fragment).toContain('name: compose-docs-skill');
+    // ...wraps the real SKILL.md frontmatter, which must survive into the
+    // generated output verbatim.
+    expect(fragment).toContain('name: compose-docs\n');
+    expect(fragment).toContain('search `projectDocs/`');
+    expect(fragment).not.toContain('$PROJECT_DOCS');
+
+    const approachYaml = readFileSync(join(cwd, 'projectDocs/_approaches/default.yaml'), 'utf-8');
+    expect(approachYaml).toContain('.agents/skills/compose-docs/SKILL.md:');
+    const skillSection = approachYaml.split('.agents/skills/compose-docs/SKILL.md:')[1];
+    expect(skillSection).toContain('"@compose-docs-skill"');
+  });
+
+  test('composed skill output keeps the real SKILL.md frontmatter, not the fragment bookkeeping frontmatter', async () => {
+    scaffoldProject(cwd, 'projectDocs');
+    await applyApproach(join(cwd, 'projectDocs'), 'default', cwd);
+
+    const output = readFileSync(join(cwd, '.agents/skills/compose-docs/SKILL.md'), 'utf-8');
+    expect(output.startsWith('---\nname: compose-docs\n')).toBe(true);
+    expect(output).not.toContain('compose-docs-skill');
   });
 
   test('wires starting prompts into the root file only, when an existing agent file is the root', () => {

@@ -47,6 +47,12 @@ interface StartingPrompt {
   destRelPath: string;   // relative to docsRoot, e.g. "starting/docs-workflow.md"
 }
 
+// Starting prompts can reference the docs root by this placeholder; it's
+// swapped for the actual docsRootName (which is only known at init time).
+function substituteDocsRoot(content: string, docsRootName: string): string {
+  return content.replace(/\$PROJECT_DOCS/g, docsRootName);
+}
+
 function copyStartingPrompts(docsRoot: string, docsRootName: string, created: string[]): StartingPrompt[] {
   const sourceDir = startingPromptsSourceDir();
   if (!existsSync(sourceDir)) return [];
@@ -69,7 +75,7 @@ function copyStartingPrompts(docsRoot: string, docsRootName: string, created: st
         `description: ${idToTitle(id)}`,
         '---',
         '',
-        content.trim(),
+        substituteDocsRoot(content, docsRootName).trim(),
         '',
       ].join('\n'));
       created.push(`${docsRootName}/starting/${id}.md`);
@@ -77,6 +83,57 @@ function copyStartingPrompts(docsRoot: string, docsRootName: string, created: st
     prompts.push({ id, destRelPath: `starting/${id}.md` });
   }
   return prompts;
+}
+
+// Skills are shipped as full SKILL.md files (source of truth for their own
+// frontmatter) under src/startingPrompts/skills/<skill-name>/SKILL.md, and
+// wired to their own output path rather than being merged into the root
+// file like other starting prompts.
+//
+// The fragment file compose-md writes still needs its own `name:`
+// frontmatter so it's addressable as `@id` — but scanFragments() strips a
+// file's outermost frontmatter block when loading it as a fragment. So the
+// skill's own required frontmatter (`name: compose-docs`, etc.) is nested
+// one level in: it's the *second* `---` block, which survives as literal
+// fragment content and ends up verbatim in the generated SKILL.md output.
+interface StartingSkill {
+  id: string;          // fragment reference id, e.g. "compose-docs-skill"
+  outputPath: string;  // e.g. ".agents/skills/compose-docs/SKILL.md"
+}
+
+function copyStartingSkills(docsRoot: string, docsRootName: string, created: string[]): StartingSkill[] {
+  const sourceDir = join(startingPromptsSourceDir(), 'skills');
+  if (!existsSync(sourceDir)) return [];
+
+  const skillDirs = readdirSync(sourceDir, { withFileTypes: true }).filter(e => e.isDirectory());
+  if (skillDirs.length === 0) return [];
+
+  const destDir = join(docsRoot, 'starting');
+  mkdirSync(destDir, { recursive: true });
+
+  const skills: StartingSkill[] = [];
+  for (const { name: skillName } of skillDirs) {
+    const sourceFile = join(sourceDir, skillName, 'SKILL.md');
+    if (!existsSync(sourceFile)) continue;
+
+    const id = `${toKebab(skillName)}-skill`;
+    const destFile = join(destDir, `${id}.md`);
+    if (!existsSync(destFile)) {
+      const content = readFileSync(sourceFile, 'utf-8');
+      writeFileSync(destFile, [
+        '---',
+        `name: ${id}`,
+        `description: ${idToTitle(id)}`,
+        '---',
+        '',
+        substituteDocsRoot(content, docsRootName).trim(),
+        '',
+      ].join('\n'));
+      created.push(`${docsRootName}/starting/${id}.md`);
+    }
+    skills.push({ id, outputPath: `.agents/skills/${skillName}/SKILL.md` });
+  }
+  return skills;
 }
 
 function isAgentFile(relPath: string): boolean {
@@ -108,7 +165,7 @@ function findAgentFiles(cwd: string, excludeDirs: string[] = []): AgentFile[] {
   return results.sort((a, b) => a.sourcePath.localeCompare(b.sourcePath));
 }
 
-function buildDefaultYaml(agentFiles: AgentFile[], startingPrompts: StartingPrompt[]): string {
+function buildDefaultYaml(agentFiles: AgentFile[], startingPrompts: StartingPrompt[], startingSkills: StartingSkill[]): string {
   const startingIncludes = startingPrompts.map(({ id }) => `    - "@${id}"`);
 
   // The "root file" is an agent file that lives at the project root (no
@@ -137,6 +194,11 @@ function buildDefaultYaml(agentFiles: AgentFile[], startingPrompts: StartingProm
   for (const { sourcePath, fragmentId } of [...remainingRootFiles, ...otherFiles]) {
     lines.push(`  ${sourcePath}:`);
     lines.push(`    - "@${fragmentId}"`);
+  }
+
+  for (const { id, outputPath } of startingSkills) {
+    lines.push(`  ${outputPath}:`);
+    lines.push(`    - "@${id}"`);
   }
 
   return lines.join('\n') + '\n';
@@ -186,6 +248,7 @@ export function scaffoldProject(cwd: string, docsRootName: string): string[] {
 
   // Curated starter fragments shipped with compose-md
   const startingPrompts = copyStartingPrompts(docsRoot, docsRootName, created);
+  const startingSkills = copyStartingSkills(docsRoot, docsRootName, created);
 
   // Scan for agent prompt files (excluding the docs root we just created)
   const agentFiles = findAgentFiles(cwd, [docsRootName]);
@@ -212,7 +275,7 @@ export function scaffoldProject(cwd: string, docsRootName: string): string[] {
   // Default approach YAML
   const defaultApproach = join(docsRoot, '_approaches', 'default.yaml');
   if (!existsSync(defaultApproach)) {
-    writeFileSync(defaultApproach, buildDefaultYaml(agentFiles, startingPrompts));
+    writeFileSync(defaultApproach, buildDefaultYaml(agentFiles, startingPrompts, startingSkills));
     created.push(`${docsRootName}/_approaches/default.yaml`);
   }
 
