@@ -10,7 +10,11 @@ function resolveContent(
 ): string {
   const parts: string[] = [];
   for (const id of fragmentIds) {
-    const key = id.startsWith('@') ? id.slice(1) : id;
+    if (!id.startsWith('@')) {
+      parts.push(id.trim());
+      continue;
+    }
+    const key = id.slice(1);
     const fragment = fragments.get(key);
     if (!fragment) throw new Error(`Fragment not found: ${id}`);
     parts.push(fragment.content.trim());

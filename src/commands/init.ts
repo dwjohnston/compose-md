@@ -130,19 +130,21 @@ function buildDefaultYaml(agentFiles: AgentFile[], startingPrompts: StartingProm
   return lines.join('\n') + '\n';
 }
 
-function ensureGitignore(cwd: string, docsRootName: string): void {
+function ensureGitignore(cwd: string, docsRootName: string): 'created' | 'updated' | 'unchanged' {
   const gitignorePath = join(cwd, '.gitignore');
   const entries = [
     '.compose-active',
     `${docsRootName}/_index.md`,
   ];
 
-  const existing = existsSync(gitignorePath) ? readFileSync(gitignorePath, 'utf-8') : '';
+  const gitignoreExisted = existsSync(gitignorePath);
+  const existing = gitignoreExisted ? readFileSync(gitignorePath, 'utf-8') : '';
   const toAdd = entries.filter(e => !existing.split('\n').some(line => line.trim() === e));
-  if (toAdd.length === 0) return;
+  if (toAdd.length === 0) return 'unchanged';
 
   const prefix = existing.endsWith('\n') || existing === '' ? '' : '\n';
   appendFileSync(gitignorePath, prefix + toAdd.join('\n') + '\n');
+  return gitignoreExisted ? 'updated' : 'created';
 }
 
 export function scaffoldProject(cwd: string, docsRootName: string): string[] {
@@ -210,7 +212,10 @@ export function scaffoldProject(cwd: string, docsRootName: string): string[] {
   }
 
   // Gitignore
-  ensureGitignore(cwd, docsRootName);
+  const gitignoreResult = ensureGitignore(cwd, docsRootName);
+  if (gitignoreResult !== 'unchanged') {
+    created.push(`.gitignore (${gitignoreResult})`);
+  }
 
   return created;
 }

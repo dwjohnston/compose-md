@@ -86,6 +86,24 @@ describe('scaffoldProject', () => {
     expect(gitignore).toContain('projectDocs/_index.md');
   });
 
+  test('reports .gitignore as created when it did not exist, updated when it did', () => {
+    const createdFresh = scaffoldProject(cwd, 'projectDocs');
+    expect(createdFresh).toContain('.gitignore (created)');
+
+    rmSync(join(cwd, 'projectDocs'), { recursive: true, force: true });
+    write('.gitignore', 'node_modules\n');
+
+    const createdWithExisting = scaffoldProject(cwd, 'projectDocs');
+    expect(createdWithExisting).toContain('.gitignore (updated)');
+  });
+
+  test('does not report .gitignore when re-running with no new entries to add', () => {
+    scaffoldProject(cwd, 'projectDocs');
+    const second = scaffoldProject(cwd, 'projectDocs');
+
+    expect(second.some(p => p.startsWith('.gitignore'))).toBe(false);
+  });
+
   test('registers discovered agent files as whole-file fragments', () => {
     write('CLAUDE.md', '# Root instructions\n\nSome content.');
     write('.claude/agents/reviewer.md', '# Reviewer agent');
