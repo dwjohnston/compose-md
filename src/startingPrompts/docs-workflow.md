@@ -6,4 +6,4 @@ Instead, edit the files in $PROJECT_DOCS
 
 Invoke the /compose-docs skill to assist.
 
-If you learn something durable about this project along the way, update your memory as well as the docs fragments.
+If your memory system would normally have you write something durable directly into one of these files, write it into the corresponding fragment in $PROJECT_DOCS instead, then run `compose apply` to regenerate the file.
