@@ -213,7 +213,7 @@ describe('scaffoldProject', () => {
     scaffoldProject(cwd, 'projectDocs');
 
     const approachYaml = readFileSync(join(cwd, 'projectDocs/_approaches/default.yaml'), 'utf-8');
-    const rootSection = approachYaml.split('AGENTS.md:')[1].split('src/CLAUDE.md:')[0];
+    const rootSection = approachYaml.split('AGENTS.md:')[1]!.split('src/CLAUDE.md:')[0];
     expect(rootSection).toContain('"@docs-workflow"');
     expect(rootSection).toContain('"@getting-started"');
 
