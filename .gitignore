@@ -5,7 +5,7 @@ node_modules
 out
 dist
 *.tgz
-
+.claude
 # code coverage
 coverage
 *.lcov
