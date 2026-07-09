@@ -4,10 +4,14 @@
   "type": "module",
   "private": true,
   "bin": {
-    "compose": "./src/cli.ts"
+    "compose": "./dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "compose": "bun run src/cli.ts",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && cp -R src/startingPrompts dist/startingPrompts && chmod +x dist/cli.js",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf projectDocs && git checkout -- .gitignore"
