@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { basename, dirname, join, relative } from 'path';
 import { loadApproach } from '../lib/approaches.js';
 import { scanFragments, type Fragment } from '../lib/fragments.js';
 import { getActiveApproach, setActiveApproach } from '../lib/active.js';
@@ -20,6 +20,26 @@ function resolveContent(
     parts.push(fragment.content.trim());
   }
   return parts.join('\n\n');
+}
+
+function generateIndexContent(docsRoot: string, fragments: Map<string, Fragment>): string {
+  const described = [...fragments.values()].filter((f) => f.description);
+
+  const sorted = described.sort((a, b) => {
+    const relA = relative(docsRoot, a.filePath);
+    const relB = relative(docsRoot, b.filePath);
+    const dirA = dirname(relA);
+    const dirB = dirname(relB);
+    if (dirA !== dirB) return dirA.localeCompare(dirB);
+    return basename(relA).localeCompare(basename(relB));
+  });
+
+  const lines = ['# Fragment Index', ''];
+  for (const fragment of sorted) {
+    const relPath = relative(docsRoot, fragment.filePath);
+    lines.push(`- **${fragment.name}** (${relPath}): ${fragment.description}`);
+  }
+  return lines.join('\n') + '\n';
 }
 
 export async function applyApproach(docsRoot: string, name: string, cwd: string): Promise<void> {
@@ -49,6 +69,9 @@ export async function applyApproach(docsRoot: string, name: string, cwd: string)
     writeFileSync(fullPath, composed + '\n');
     console.log(`Written: ${outputPath}`);
   }
+
+  const indexContent = generateIndexContent(docsRoot, fragments);
+  writeFileSync(join(docsRoot, '_index.md'), indexContent);
 
   setActiveApproach(cwd, name);
   console.log(`\nApplied: ${name}`);
