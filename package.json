@@ -1,17 +1,32 @@
 {
   "name": "compose-md",
-  "module": "index.ts",
+  "version": "0.0.0",
+  "description": "A CLI for composing markdown agent context files (CLAUDE.md, AGENTS.md, etc.) from reusable fragments and YAML approach configs.",
   "type": "module",
-  "private": true,
-  "bin": {
-    "compose": "./src/cli.ts"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dwjohnston/compose-md.git"
   },
+  "main": "./dist/cli.js",
+  "exports": "./dist/cli.js",
+  "bin": {
+    "compose": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "compose": "bun run src/cli.ts",
     "test": "bun test",
-    "clean": "rm -rf projectDocs && git checkout -- .gitignore"
+    "clean": "rm -rf projectDocs && git checkout -- .gitignore",
+    "build": "bun build src/cli.ts --outdir dist --target node",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9"
   },
