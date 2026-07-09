@@ -9,11 +9,13 @@
   "scripts": {
     "compose": "bun run src/cli.ts",
     "test": "bun test",
+    "typecheck": "tsc --noEmit",
     "clean": "rm -rf projectDocs && git checkout -- .gitignore"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/js-yaml": "^4.0.9"
+    "@types/js-yaml": "^4.0.9",
+    "typescript": "^5"
   },
   "peerDependencies": {
     "typescript": "^5"
