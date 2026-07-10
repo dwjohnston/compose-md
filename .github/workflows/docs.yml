@@ -31,11 +31,9 @@ jobs:
           bun-version: latest
 
       - name: Install docs dependencies
-        working-directory: docs
         run: bun install
 
       - name: Build docs
-        working-directory: docs
         run: bun run docs:build
 
       - name: Setup Pages
