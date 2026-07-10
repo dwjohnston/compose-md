@@ -2,7 +2,7 @@ import { input, confirm } from '@inquirer/prompts';
 import { existsSync, mkdirSync, writeFileSync, readFileSync, appendFileSync, readdirSync } from 'fs';
 import { join, relative, basename, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
-import { CONFIG_FILE, setDocsRootConfig } from '../lib/config.ts';
+import { CONFIG_FILE, setDocsRootConfig } from '../lib/config.js';
 
 interface AgentFile {
   sourcePath: string;   // relative to cwd, e.g. "CLAUDE.md"

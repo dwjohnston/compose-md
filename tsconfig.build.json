@@ -1,0 +1,24 @@
+{
+  // Build config for producing a plain-Node-runnable dist/ from src/.
+  //
+  // tsconfig.json uses "bundler" mode with noEmit for editor/type-check
+  // purposes. This config extends it but turns emit back on and targets
+  // Node's native ESM resolution instead. Source files already import
+  // sibling modules with explicit ".js" extensions (e.g. "./interactive.js"),
+  // which is exactly what Node ESM resolution expects, so plain per-file
+  // transpilation (no bundler) preserving the src/ directory layout is
+  // enough to produce a runnable dist/.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "declaration": false,
+    "sourceMap": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}
