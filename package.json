@@ -14,7 +14,9 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json && cp -R src/startingPrompts dist/startingPrompts && chmod +x dist/cli.js",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf projectDocs && git checkout -- .gitignore"
+    "clean": "rm -rf projectDocs && git checkout -- .gitignore",
+    "docs:dev": "cd docs && bun install && bun run docs:dev",
+    "docs:build": "cd docs && bun install && bun run docs:build"
   },
   "devDependencies": {
     "@types/bun": "latest",
