@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   srcDir: "docs",
-
+  base: "/compose-md/",
   title: "Compose-MD ",
   description: "Compose markdown docs from fragments of other markdown docs ",
   themeConfig: {
