@@ -2,6 +2,7 @@ import { input, confirm } from '@inquirer/prompts';
 import { existsSync, mkdirSync, writeFileSync, readFileSync, appendFileSync, readdirSync } from 'fs';
 import { join, relative, basename, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
+import { CONFIG_FILE, setDocsRootConfig } from '../lib/config.ts';
 
 interface AgentFile {
   sourcePath: string;   // relative to cwd, e.g. "CLAUDE.md"
@@ -208,6 +209,7 @@ function ensureGitignore(cwd: string, docsRootName: string): 'created' | 'update
   const gitignorePath = join(cwd, '.gitignore');
   const entries = [
     '.compose-active',
+    CONFIG_FILE,
     `${docsRootName}/_index.md`,
   ];
 
@@ -312,6 +314,7 @@ export async function runInit(cwd: string): Promise<void> {
   }
 
   const created = scaffoldProject(cwd, docsRootName);
+  setDocsRootConfig(cwd, docsRootName);
   const agentFiles = findAgentFiles(cwd, [docsRootName]);
 
   console.log('\nCreated:');
