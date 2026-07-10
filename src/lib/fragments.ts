@@ -13,7 +13,7 @@ function parseFrontmatter(raw: string): { data: Record<string, string>; body: st
   if (!match) return { data: {}, body: raw };
 
   const data: Record<string, string> = {};
-  for (const line of (match[1] ?? '').split('\n')) {
+  for (const line of match[1]!.split('\n')) {
     const colonIdx = line.indexOf(':');
     if (colonIdx === -1) continue;
     const key = line.slice(0, colonIdx).trim();
@@ -21,7 +21,7 @@ function parseFrontmatter(raw: string): { data: Record<string, string>; body: st
     data[key] = value;
   }
 
-  return { data, body: match[2] ?? '' };
+  return { data, body: match[2]! };
 }
 
 export function scanFragments(docsRoot: string): Map<string, Fragment> {
