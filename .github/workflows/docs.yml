@@ -34,7 +34,6 @@ jobs:
         run: bun install
 
       - name: Build docs
-        working-directory: docs
         run: bun run docs:build
 
       - name: Setup Pages
