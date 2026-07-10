@@ -1,12 +1,11 @@
-import { defineConfig } from "vitepress";
+import { defineConfig } from 'vitepress'
 
+// https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "compose-md",
-  description: "A Bun CLI for composing markdown files from a fragment pool",
-  // Served at https://<owner>.github.io/compose-md/ by the GitHub Pages workflow.
-  base: "/compose-md/",
-  cleanUrls: true,
+  srcDir: "docs",
 
+  title: "Compose-MD ",
+  description: "Compose markdown docs from fragments of other markdown docs ",
   themeConfig: {
     nav: [
       { text: "Guide", link: "/overview" },
@@ -51,5 +50,5 @@ export default defineConfig({
     footer: {
       message: "Released under the MIT License.",
     },
-  },
-});
+  }
+})

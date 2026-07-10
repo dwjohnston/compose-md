@@ -15,13 +15,15 @@
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf projectDocs && git checkout -- .gitignore",
-    "docs:dev": "cd docs && bun install && bun run docs:dev",
-    "docs:build": "cd docs && bun install && bun run docs:build"
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitepress": "^2.0.0-alpha.18"
   },
   "peerDependencies": {
     "typescript": "^5"
