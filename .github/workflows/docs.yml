@@ -31,7 +31,6 @@ jobs:
           bun-version: latest
 
       - name: Install docs dependencies
-        working-directory: docs
         run: bun install
 
       - name: Build docs
