@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-import { join } from 'path';
 import { runInteractive } from './interactive.js';
 import { viewApproach } from './commands/view.js';
 import { applyApproach } from './commands/apply.js';
 import { runInit } from './commands/init.js';
+import { getDocsRoot } from './lib/config.js';
 
 const cwd = process.cwd();
-const docsRoot = join(cwd, 'projectDocs');
+const docsRoot = getDocsRoot(cwd);
 
 const [, , command, ...args] = process.argv;
 

@@ -4,6 +4,7 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { findAgentFiles, scaffoldProject } from './init.ts';
 import { applyApproach } from './apply.ts';
+import { getDocsRoot, setDocsRootConfig } from '../lib/config.ts';
 
 let cwd: string;
 
@@ -243,5 +244,36 @@ describe('scaffoldProject', () => {
 
     const fragment = readFileSync(join(cwd, 'projectDocs/existing/claude.md'), 'utf-8');
     expect(fragment).toBe('hand-edited fragment, do not clobber');
+  });
+});
+
+describe('custom docs root name (issue #14 regression)', () => {
+  test('persists the chosen docs root name to .compose-config.json and adds it to .gitignore', () => {
+    scaffoldProject(cwd, 'docs');
+    setDocsRootConfig(cwd, 'docs');
+
+    const config = JSON.parse(readFileSync(join(cwd, '.compose-config.json'), 'utf-8'));
+    expect(config).toEqual({ docsRoot: 'docs' });
+
+    const gitignore = readFileSync(join(cwd, '.gitignore'), 'utf-8');
+    expect(gitignore).toContain('.compose-config.json');
+  });
+
+  test('reproduces the original bug: apply finds the approach under a custom docs root once the config is persisted', async () => {
+    // This mirrors what `runInit` does: scaffold under a non-default name,
+    // then persist that name so later commands (apply/view/interactive)
+    // can find it instead of hardcoding 'projectDocs'.
+    scaffoldProject(cwd, 'docs');
+    setDocsRootConfig(cwd, 'docs');
+
+    // This is the exact resolution logic src/cli.ts uses.
+    const resolvedDocsRoot = getDocsRoot(cwd);
+    expect(resolvedDocsRoot).toBe(join(cwd, 'docs'));
+
+    // Before the fix, cli.ts would have looked in join(cwd, 'projectDocs')
+    // here and failed with "No approaches found in .../projectDocs".
+    await applyApproach(resolvedDocsRoot, 'default', cwd);
+
+    expect(existsSync(join(cwd, 'AGENTS.md'))).toBe(true);
   });
 });
