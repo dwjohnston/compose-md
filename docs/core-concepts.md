@@ -1,10 +1,32 @@
+---
+exampleValue: "hello from core-concepts.md's frontmatter"
+additionalAiNotice: "🙋‍♂️ Human notice: I'm quite active here."
+---
+
 # Core Concepts
+
+<!--@include: ./parts/ai-generated-notice.md-->
+
+
+## Docs root
+
+The docs root is a folder containing all your documents.
+
+```
+projectDocs/
+   _approaches/
+     my-approach.yaml
+   somefolder/
+      file1.md
+   _index.md
+```
 
 ## Fragment
 
-A standalone `.md` file with frontmatter, anywhere under the docs root (except `_approaches/`
-and `_index.md`). The `name` field is a stable ID used to reference the fragment from approach
-configs. The `description` field is optional and informational only.
+A fragment is a standalone `.md` file with frontmatter,  that lives in your docs root, used to compose the actual output files you want to create.
+
+The `name` field is a stable ID used to reference the fragment from approach configs. The
+`description` field is optional and is used when creating the `_index.md`.
 
 ```md
 ---
@@ -19,8 +41,8 @@ description: bun commands for test, typecheck, validate, and generate
 
 ## Approach
 
-A YAML config in `_approaches/` that declares, per output file, an ordered list of fragment
-references (`"@id"`) and/or literal inline text.
+An approach is a YAML config in `_approaches/` that declares, per output file, an ordered list
+of fragment references (`"@id"`) and/or literal inline text.
 
 Composing an output joins its list entries in order, each trimmed, separated by a blank line.
 
@@ -31,7 +53,11 @@ hypothesis: Lighter per-task context enables smaller model usage
 
 outputs:
   CLAUDE.md:
+    - "If the string does not start with the '@' symbol, this text will be inserted literally"
     - "@tooling"
+    - | 
+      You can use the yaml pipe operator
+      to construct multiline strings  
     - "@language"
     - "@canonical-levels"
     - "@skills-index"
@@ -45,22 +71,12 @@ outputs:
 will fail to parse.
 :::
 
-## Literal inline content
+## _index.md
 
-A list entry that does not start with `@` is included verbatim as literal text, rather than
-resolved as a fragment reference. This covers bespoke, one-off content (e.g. a frontmatter
-header) that isn't worth its own fragment file. YAML block scalars (`|`) give multiline literal
-text for free:
+A .gitignored _index.md file will be created in your docs root. 
 
-```yaml
-outputs:
-  AGENTS.md:
-    - |
-      ---
-      title: Bespoke Header
-      ---
-    - "@docs-workflow"
-```
+This is for the human user's own convenience to make sense of 
+
 
 ## Active approach
 

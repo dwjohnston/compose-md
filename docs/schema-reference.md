@@ -1,12 +1,12 @@
 # Schema Reference
 
+<!--@include: ./parts/ai-generated-notice.md-->
+
 ## Approach YAML schema
 
 ```yaml
 name: string           # required; matches filename without extension
 description: string    # required; one-line summary
-hypothesis: string      # optional; the experiment hypothesis being tested
-status: string          # optional; e.g. "active", "retired", "experimental"
 
 outputs:
   <output-path>:         # path relative to project root

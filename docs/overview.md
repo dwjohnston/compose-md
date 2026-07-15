@@ -1,5 +1,7 @@
 # Overview
 
+<!--@include: ./parts/ai-generated-notice.md-->
+
 `compose-md` is a Bun CLI library for composing markdown files from a fragment pool.
 
 Fragments are standalone `.md` files with frontmatter. Approach configs (YAML) declare, per
@@ -16,6 +18,23 @@ This is aimed at projects that maintain multiple AI-agent-facing prompt files (`
 - Keep the source of truth in small, individually-editable fragment files instead of one large
   generated document.
 
+## Motivation
+
+Agent harnesses give you several places to put guidance: a root `AGENTS.md` or `CLAUDE.md` file
+that's always in context, a subagent definition that only loads for a delegated task, or a
+`SKILL.md` that only loads when its skill is invoked. It's often not clear in advance which
+placement works best, and the only way to find out is to try each one — which normally means
+copying the same paragraph into multiple files and keeping the copies in sync by hand.
+
+Harnesses also don't agree on file layout. Claude Code uses `.claude/skills/*` and `CLAUDE.md`;
+a different harness, such as OpenCode, uses different file names and directories. Content
+written for one harness has to be manually ported to evaluate another.
+
+`compose-md` addresses both by keeping content in fragment files that don't know which output
+file they'll end up in, and letting an approach config declare which fragments go where. Moving
+a fragment between a root file, a subagent file, and a skill file, or retargeting a whole fragment
+pool at a different harness's file layout, is a config edit rather than a content rewrite.
+
 ## How it fits together
 
 1. You write **fragments** — small markdown files, each tagged with a `name` in its frontmatter.
@@ -29,28 +48,5 @@ See [Core Concepts](/core-concepts) for the full model, [CLI Command Reference](
 for everything the CLI does, and [Known Limitations](/known-limitations) for what's not built
 yet.
 
-## Installation
-
-`compose-md` ships as a Bun CLI. Install it as a dependency of your project and run it via
-`bunx`/`bun run`, or install it globally — however you prefer to run Bun-based CLI tools.
-
-```sh
-bun add -d compose-md
-bunx compose init
-```
-
-## Quick start
-
-```sh
-# Scaffold a docs root, sample fragment, and a starter approach
-bunx compose init
-
-# See what an approach would generate, without writing anything
-bunx compose view default
-
-# Generate the output files for an approach
-bunx compose apply default
-
-# Or just run compose with no arguments for an interactive picker
-bunx compose
-```
+See [Getting Started](/get-started) to install `compose-md` and scaffold a project with
+`compose init`.
