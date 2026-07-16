@@ -3,6 +3,7 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   srcDir: "docs",
+  srcExclude: ["parts/**"],
   base: "/compose-md/",
   title: "Compose-MD ",
   description: "Compose markdown docs from fragments of other markdown docs ",
@@ -18,14 +19,16 @@ export default defineConfig({
     sidebar: [
       {
         text: "Introduction",
-        items: [{ text: "Overview", link: "/overview" }],
+        items: [
+          { text: "Overview", link: "/overview" },
+          { text: "Getting Started", link: "/get-started" },
+        ],
       },
       {
         text: "Guide",
         items: [
           { text: "Core Concepts", link: "/core-concepts" },
-          { text: "Directory Structure", link: "/directory-structure" },
-          { text: "Starting Prompts & Skills", link: "/starting-prompts" },
+          { text: "How It Works", link: "/how-it-works" },
           { text: "CLI Command Reference", link: "/cli-reference" },
           { text: "Schema Reference", link: "/schema-reference" },
         ],
@@ -33,8 +36,9 @@ export default defineConfig({
       {
         text: "Reference",
         items: [
-          { text: "Constraints", link: "/constraints" },
-          { text: "Known Limitations", link: "/known-limitations" },
+          { text: "This is Experimental", link: "/this-is-experimental" },
+          { text: "Limitations", link: "/limitations" },
+          { text: "AI Content Policy", link: "/ai-content-policy" },
         ],
       },
     ],
@@ -48,7 +52,8 @@ export default defineConfig({
     },
 
     footer: {
-      message: "Released under the MIT License.",
+      message:
+        'Released under the MIT License. · <a href="/compose-md/ai-content-policy.html">AI Content Policy</a>',
     },
   }
 })
