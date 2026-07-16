@@ -1,23 +1,79 @@
-# Compose-MD
+---
+# https://vitepress.dev/reference/default-theme-home-page
+layout: home
 
-<!--@include: ./parts/ai-generated-notice.md-->
+hero:
+  name: "Compose-MD"
+  text: "One fragment pool. Many harness layouts."
+  actions:
+    - theme: brand
+      text: Get Started
+      link: /get-started
+    - theme: alt
+      text: Overview
+      link: /overview
+---
 
-`compose-md` is a Bun CLI that composes markdown files — `AGENTS.md`, `CLAUDE.md`, `SKILL.md`,
-and similar agent-facing prompt files — from a pool of reusable fragments.
+```md
+Prefer tests that fail for the right reason.
+Prefer visual snapshots for UI regressions.
+Keep architecture decisions near the code they constrain.
+```
 
-Two problems led to it:
+Should this be a `CLAUDE.md`? An `AGENTS.md`? A `SKILL.md`? 🤔
 
-- It's often unclear upfront whether a piece of guidance belongs in a root instruction file, a
-  subagent definition, or a skill file. Testing each placement by hand means copying the same
-  content into multiple files and keeping the copies in sync.
-- Different agent harnesses expect different files and directory layouts. Claude Code uses
-  `.claude/skills/*` and `CLAUDE.md`; an alternative harness like OpenCode uses something else.
-  Retargeting hand-written docs to a new harness means porting them by hand.
+Claude doesn't support `.agents/skills/*/SKILL.md`.
 
-`compose-md` keeps the content in small fragment files with a stable name, and uses an approach
-config to declare which fragments go into which output files. Changing where content lands, or
-which harness you're targeting, is a config edit, not a rewrite.
+And Codex doesn't support `.claude/skills/*/SKILL.md`.
 
-See [Overview](/overview) for how the pieces fit together, or jump straight to
-[Getting Started](/get-started).
+But what if you want to use multiple harnesses?
 
+## The solution: compose-md
+
+Create your instructions in a docs root folder:
+
+```
+projectDocs/
+  testing/
+    tdd.md
+    visual-tests.md
+  architecture/
+    core-concepts.md
+```
+
+Declare your approaches — same fragments, different layouts:
+
+::: code-group
+
+```yaml [agents]
+name: agents
+description: Everything in a root AGENTS.md
+outputs:
+  AGENTS.md:
+    - "@tdd"
+    - "@visual-tests"
+    - "@core-concepts"
+```
+
+```yaml [skills]
+name: skills
+description: Domain guidance as skills, light root file
+outputs:
+  CLAUDE.md:
+    - "Load a skill when the task matches its domain."
+  .claude/skills/testing/SKILL.md:
+    - "@tdd"
+    - "@visual-tests"
+  .claude/skills/architecture/SKILL.md:
+    - "@core-concepts"
+```
+
+:::
+
+Then apply the approach:
+
+```sh
+compose apply skills
+```
+
+Switch harnesses — or experiment with placement — by editing YAML, not rewriting content.

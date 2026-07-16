@@ -45,7 +45,7 @@ pool at a different harness's file layout, is a config edit rather than a conten
    `compose` TUI to pick an approach first.
 
 See [Core Concepts](/core-concepts) for the full model, [CLI Command Reference](/cli-reference)
-for everything the CLI does, and [Known Limitations](/known-limitations) for what's not built
+for everything the CLI does, and [Limitations](/limitations) for what's not built
 yet.
 
 See [Getting Started](/get-started) to install `compose-md` and scaffold a project with

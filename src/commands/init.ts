@@ -2,7 +2,8 @@ import { input, confirm } from '@inquirer/prompts';
 import { existsSync, mkdirSync, writeFileSync, readFileSync, appendFileSync, readdirSync } from 'fs';
 import { join, relative, basename, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
-import { CONFIG_FILE, setDocsRootConfig } from '../lib/config.js';
+import { setDocsRootConfig } from '../lib/config.js';
+import { applyApproach } from './apply.js';
 
 interface AgentFile {
   sourcePath: string;   // relative to cwd, e.g. "CLAUDE.md"
@@ -186,7 +187,6 @@ function buildDefaultYaml(agentFiles: AgentFile[], startingPrompts: StartingProm
     'outputs:',
     `  ${rootSourcePath}:`,
     ...startingIncludes,
-    '    - "@getting-started"',
   ];
   if (rootFile) {
     lines.push(`    - "@${rootFile.fragmentId}"`);
@@ -209,7 +209,6 @@ function ensureGitignore(cwd: string, docsRootName: string): 'created' | 'update
   const gitignorePath = join(cwd, '.gitignore');
   const entries = [
     '.compose-active',
-    CONFIG_FILE,
     `${docsRootName}/_index.md`,
   ];
 
@@ -230,23 +229,6 @@ export function scaffoldProject(cwd: string, docsRootName: string): string[] {
   // Directories
   mkdirSync(join(docsRoot, '_approaches'), { recursive: true });
   created.push(`${docsRootName}/_approaches/`);
-
-  // Sample fragment
-  const sampleFragment = join(docsRoot, 'getting-started.md');
-  if (!existsSync(sampleFragment)) {
-    writeFileSync(sampleFragment, [
-      '---',
-      'name: getting-started',
-      'description: quick-start guide for new contributors',
-      '---',
-      '',
-      '# Getting Started',
-      '',
-      '<!-- Add your getting started content here -->',
-      '',
-    ].join('\n'));
-    created.push(`${docsRootName}/getting-started.md`);
-  }
 
   // Curated starter fragments shipped with compose-md
   const startingPrompts = copyStartingPrompts(docsRoot, docsRootName, created);
@@ -327,7 +309,17 @@ export async function runInit(cwd: string): Promise<void> {
       console.log(`  ${sourcePath} → @${fragmentId}`);
     }
   }
-  console.log('\nDone. Run `compose` to select and apply an approach.');
+
+  const shouldApply = await confirm({
+    message: "Now run 'compose apply'?",
+    default: true,
+  });
+  if (shouldApply) {
+    console.log('');
+    await applyApproach(docsRoot, 'default', cwd);
+  } else {
+    console.log('\nDone. Run `compose apply default` when you are ready.');
+  }
 }
 
 export { findAgentFiles };

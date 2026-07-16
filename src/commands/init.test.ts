@@ -73,15 +73,15 @@ describe('findAgentFiles', () => {
 });
 
 describe('scaffoldProject', () => {
-  test('creates the docs root, sample fragment, approach, and gitignore', () => {
+  test('creates the docs root, approach, and gitignore', () => {
     const created = scaffoldProject(cwd, 'projectDocs');
 
     expect(created).toContain('projectDocs/_approaches/');
-    expect(created).toContain('projectDocs/getting-started.md');
+    expect(created).not.toContain('projectDocs/getting-started.md');
     expect(created).toContain('projectDocs/_approaches/default.yaml');
     expect(created).toContain('projectDocs/_index.md');
 
-    expect(existsSync(join(cwd, 'projectDocs/getting-started.md'))).toBe(true);
+    expect(existsSync(join(cwd, 'projectDocs/getting-started.md'))).toBe(false);
 
     const gitignore = readFileSync(join(cwd, '.gitignore'), 'utf-8');
     expect(gitignore).toContain('.compose-active');
@@ -204,7 +204,6 @@ describe('scaffoldProject', () => {
     const approachYaml = readFileSync(join(cwd, 'projectDocs/_approaches/default.yaml'), 'utf-8');
     const nestedSection = approachYaml.split('src/CLAUDE.md:')[1];
     expect(nestedSection).not.toContain('"@docs-workflow"');
-    expect(nestedSection).not.toContain('"@getting-started"');
     expect(nestedSection).toContain('"@src-claude"');
   });
 
@@ -216,7 +215,7 @@ describe('scaffoldProject', () => {
     const approachYaml = readFileSync(join(cwd, 'projectDocs/_approaches/default.yaml'), 'utf-8');
     const rootSection = approachYaml.split('AGENTS.md:')[1]!.split('src/CLAUDE.md:')[0];
     expect(rootSection).toContain('"@docs-workflow"');
-    expect(rootSection).toContain('"@getting-started"');
+    expect(rootSection).not.toContain('"@getting-started"');
 
     const nestedSection = approachYaml.split('src/CLAUDE.md:')[1];
     expect(nestedSection).not.toContain('"@docs-workflow"');
@@ -248,7 +247,7 @@ describe('scaffoldProject', () => {
 });
 
 describe('custom docs root name (issue #14 regression)', () => {
-  test('persists the chosen docs root name to .compose-config.json and adds it to .gitignore', () => {
+  test('persists the chosen docs root name to .compose-config.json and does not gitignore it', () => {
     scaffoldProject(cwd, 'docs');
     setDocsRootConfig(cwd, 'docs');
 
@@ -256,7 +255,7 @@ describe('custom docs root name (issue #14 regression)', () => {
     expect(config).toEqual({ docsRoot: 'docs' });
 
     const gitignore = readFileSync(join(cwd, '.gitignore'), 'utf-8');
-    expect(gitignore).toContain('.compose-config.json');
+    expect(gitignore).not.toContain('.compose-config.json');
   });
 
   test('reproduces the original bug: apply finds the approach under a custom docs root once the config is persisted', async () => {

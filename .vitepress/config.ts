@@ -35,7 +35,11 @@ export default defineConfig({
       },
       {
         text: "Reference",
-        items: [{ text: "Limitations", link: "/limitations" }],
+        items: [
+          { text: "This is Experimental", link: "/this-is-experimental" },
+          { text: "Limitations", link: "/limitations" },
+          { text: "AI Content Policy", link: "/ai-content-policy" },
+        ],
       },
     ],
 
@@ -48,7 +52,8 @@ export default defineConfig({
     },
 
     footer: {
-      message: "Released under the MIT License.",
+      message:
+        'Released under the MIT License. · <a href="/compose-md/ai-content-policy.html">AI Content Policy</a>',
     },
   }
 })

@@ -21,6 +21,23 @@ projectDocs/
    _index.md
 ```
 
+## _index.md
+
+A .gitignored _index.md file is created when you run `apply`. 
+
+This is mostly for the user to make sense of what is in their fragment library. 
+
+```md
+# Fragment Index
+
+- **agents** (existing/agents.md): content of AGENTS.md
+- **claude-agents-reviewer** (existing/claude-agents-reviewer.md): content of .claude/agents/reviewer.md
+- **tooling** (somefolder/tooling.md): bun commands for test, typecheck, validate, and generate
+- **compose-docs-skill** (starting/compose-docs-skill.md): Compose Docs Skill
+- **docs-workflow** (starting/docs-workflow.md): Docs Workflow
+```
+
+
 ## Fragment
 
 A fragment is a standalone `.md` file with frontmatter,  that lives in your docs root, used to compose the actual output files you want to create.
@@ -71,11 +88,6 @@ outputs:
 will fail to parse.
 :::
 
-## _index.md
-
-A .gitignored _index.md file will be created in your docs root. 
-
-This is for the human user's own convenience to make sense of 
 
 
 ## Active approach

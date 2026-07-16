@@ -41,4 +41,4 @@ Interactive initialisation for a new project.
 - Scan for existing prompts and create as whole-file fragment under `<docs-root>/existing/` 
 - Create `default` approach which replicates the current state 
 
-See limitations
+See [Limitations](/limitations)

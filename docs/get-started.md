@@ -1,10 +1,8 @@
 # Getting Started
 
-<!--@include: ./parts/ai-generated-notice.md-->
-
 ## Install
 
-`compose-md` ships as a Bun CLI. Add it as a dev dependency of your project:
+`compose-md` ships as a Node CLI Add it as a dev dependency of your project:
 
 ```sh
 bun add -d compose-md
@@ -19,41 +17,43 @@ bunx compose init
 ```
 
 You'll be prompted for a **docs root name** (default `projectDocs`) — the folder that will hold
-your fragments and approach configs. If a folder with that name already exists, `init` asks for
-confirmation before writing into it.
+your fragments and approach configs.
 
 ### What `init` creates
 
-- **`<docsRoot>/_approaches/`** — the directory approach YAML configs live in.
-- **`<docsRoot>/getting-started.md`** — a sample fragment (`@getting-started`) with a placeholder
-  body, for you to fill in.
-- **`<docsRoot>/starting/*.md`** — curated fragments shipped with `compose-md`: general starter
-  prompts, plus any bundled skills (each shipped as a full `SKILL.md`).
-- **`<docsRoot>/existing/*.md`** — `init` scans your project tree for files that already look like
-  agent prompt files (`AGENTS.md`, `CLAUDE.md`, `SKILL.md`, `GEMINI.md`,
-  `.github/copilot-instructions.md`, `.claude/agents/*.md`) and imports each one's content
-  verbatim as its own fragment here, so nothing you've already written is lost or overwritten.
-- **`<docsRoot>/_approaches/default.yaml`** — a generated approach that wires everything above
-  together: the starting prompts and the `getting-started` fragment compose into your root output
-  file (an existing root-level `AGENTS.md`/`CLAUDE.md` if one was found, otherwise a new
-  `AGENTS.md`), every other imported file gets its own single-fragment output entry at its
-  original path, and any bundled skill fragments are wired to `.agents/skills/<name>/SKILL.md`.
-- **`<docsRoot>/_index.md`** — an empty placeholder file.
-- **`.gitignore`** entries for `.compose-active`, the compose config file, and
-  `<docsRoot>/_index.md`.
+```
+.compose-config.json               # tells the tool where your docs root is
+.gitignore                         # ignore .compose-active, _index.md
+                                   # and all AGENTS.md, SKILL.md files etc
+                                   # (see limitations)
+projectDocs/
+  _approaches/
+    default.yaml                   # An initial approach containing all your existing prompts is created
+  _index.md                        # gitignored; rebuilt on apply
+                                   # This is a helpful index for you
+                                   # to see your library of fragments
+  starting/
+    docs-workflow.md               # bundled starter prompt
+    compose-docs-skill.md          # bundled skill fragment
+  existing/                        # Your existing prompt files are converted to framents here
+    agents.md                      # e.g. imported from AGENTS.md
+    claude-agents-reviewer.md      # e.g. imported from .claude/agents/reviewer.md
+```
 
-`init` also records the docs root name in your project's compose config, and prints a summary of
-everything it created plus which existing files were registered as fragments
-(`sourcePath → @fragmentId`).
+
 
 ## Next steps
 
-Apply the approach `init` generated to regenerate your output files from the fragment pool:
+Create a new approach by creating a new approach.yaml and apply it with 
 
 ```sh
-bunx compose apply default
+bunx compose apply new-approach
 ```
 
-Or run `compose` with no arguments for an interactive picker. See
-[Core Concepts](/core-concepts) for how fragments and approaches fit together, and the
-[CLI Command Reference](/cli-reference) for everything else the CLI does.
+Or run 
+
+```sh
+bunx compose 
+```
+
+to open the interative picker. 
