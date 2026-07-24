@@ -40,14 +40,13 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Create Release Pull Request or Publish to npm
+      - name: Publish to npm
         id: changesets
         uses: changesets/action@v1
         with:
           # Rebuild immediately before publishing so `dist/` (the only thing
           # `files` allows onto the npm tarball) is guaranteed fresh.
           publish: bun run build && bun run release
-          version: bun run version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
