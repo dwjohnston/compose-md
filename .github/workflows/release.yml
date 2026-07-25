@@ -30,7 +30,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
@@ -43,9 +43,7 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          # Rebuild immediately before publishing so `dist/` (the only thing
-          # `files` allows onto the npm tarball) is guaranteed fresh.
-          publish: bun run build && bun run release
+          publish: bun run release
           version: bun run version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
