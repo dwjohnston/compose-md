@@ -27,7 +27,6 @@ jobs:
           bun-version: latest
 
       # changesets/action shells out to npm/node under the hood, and `npm
-      # publish` needs a registry configured via NODE_AUTH_TOKEN.
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
