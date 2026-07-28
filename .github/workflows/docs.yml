@@ -1,12 +1,9 @@
 name: Deploy docs to GitHub Pages
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches: [main]
-    paths:
-      - ".vitepress/*"
-      - "docs/**"
-      - ".github/workflows/docs.yml"
   workflow_dispatch: {}
 
 permissions:
@@ -20,10 +17,16 @@ concurrency:
 
 jobs:
   build:
+    # Deploy when manually triggered, or when a merged PR into main carries
+    # the `update-docs` label (added by hand for docs-only fixes, or
+    # automatically to the changesets Version Packages PR on release).
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'update-docs'))
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
